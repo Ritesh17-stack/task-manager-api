@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Task Manager</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, textarea { display: block; margin-bottom: 10px; width: 300px; padding: 5px; }
+    button { margin-top: 10px; }
+    .task { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+  </style>
+</head>
+<body>
+
+  <h1>Task Manager</h1>
+
+  <h3>Create Task</h3>
+  <input type="text" id="title" placeholder="Title" />
+  <textarea id="description" placeholder="Description"></textarea>
+  <input type="date" id="dueDate" />
+  <button onclick="createTask()">Create Task</button>
+
+  <h3>All Tasks</h3>
+  <div id="tasks"></div>
+
+  <script>
+    const apiUrl = 'http://localhost:5000/api/tasks';
+
+    async function fetchTasks() {
+      const res = await fetch(apiUrl);
+      const tasks = await res.json();
+      const container = document.getElementById('tasks');
+      container.innerHTML = '';
+      tasks.forEach(task => {
+        const div = document.createElement('div');
+        div.className = 'task';
+        div.innerHTML = `
+          <strong>${task.title}</strong><br/>
+          ${task.description}<br/>
+          Due: ${task.dueDate?.substring(0, 10)}<br/>
+          <button onclick="deleteTask('${task._id}')">Delete</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function createTask() {
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const dueDate = document.getElementById('dueDate').value;
+
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, dueDate })
+      });
+
+      if (res.ok) {
+        alert('Task created!');
+        fetchTasks();
+      } else {
+        alert('Error creating task.');
+      }
+    }
+
+    async function deleteTask(id) {
+      const res = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        alert('Task deleted!');
+        fetchTasks();
+      } else {
+        alert('Failed to delete task.');
+      }
+    }
+
+    fetchTasks();
+  </script>
+</body>
+</html>
